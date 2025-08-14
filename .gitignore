@@ -58,6 +58,5 @@ bot.log
 env.example
 
 # Deploy files
-render.yaml
 Procfile
 DEPLOY.md

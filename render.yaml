@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: botmutekit-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 main.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: MUTE_TIMEOUT
+        value: 20
+      - key: JOIN_MUTED_TIMEOUT
+        value: 5
+      - key: RETURN_MUTED_TIMEOUT
+        value: 20
+      - key: AFK_CHANNEL_NAME
+        value: ausente
+      - key: MONITORED_CHANNELS
+        value: ""
