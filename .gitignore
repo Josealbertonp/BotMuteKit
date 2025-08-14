@@ -52,7 +52,6 @@ Thumbs.db
 # Logs
 *.log
 logs/
-web/
 
 # Discord bot specific
 bot.log
