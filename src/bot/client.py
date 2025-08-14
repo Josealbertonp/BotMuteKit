@@ -32,6 +32,7 @@ class BotMuteKitClient(discord.Client):
         logger.info(f"🏠 Canal de destino: '{BotSettings.AFK_CHANNEL_NAME}'")
         logger.info(f"⏱️ Timeout para mute durante uso: {BotSettings.MUTE_TIMEOUT} segundos")
         logger.info(f"🚪 Timeout para entrar mutado: {BotSettings.JOIN_MUTED_TIMEOUT} segundos")
+        logger.info(f"🔄 Timeout para retornar mutado: {BotSettings.RETURN_MUTED_TIMEOUT} segundos")
         
         await self._set_bot_presence()
         

@@ -68,12 +68,17 @@ Todas as configurações são feitas através do arquivo `.env`:
   ```env
   JOIN_MUTED_TIMEOUT=5
   ```
+- **`RETURN_MUTED_TIMEOUT`**: Para quem sai da sala e retorna mutado
+  ```env
+  RETURN_MUTED_TIMEOUT=20
+  ```
 
 ### Exemplo de Configuração Completa:
 ```env
 DISCORD_TOKEN=seu_token_aqui
 MUTE_TIMEOUT=20
 JOIN_MUTED_TIMEOUT=5
+RETURN_MUTED_TIMEOUT=20
 AFK_CHANNEL_NAME=ausente
 MONITORED_CHANNELS=Geral,Conversa,Reunião
 ```

@@ -20,7 +20,11 @@ class VoiceMonitor:
         self.channel_manager = ChannelManager()
         self.mute_timeout = BotSettings.MUTE_TIMEOUT
         self.join_muted_timeout = BotSettings.JOIN_MUTED_TIMEOUT
+        self.return_muted_timeout = BotSettings.RETURN_MUTED_TIMEOUT
         self.monitored_channels = BotSettings.MONITORED_CHANNELS
+        
+        # Rastreia usuários que saíram de salas monitoradas
+        self.users_left_monitored_channels = {}
     
     async def handle_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
         """
@@ -83,18 +87,39 @@ class VoiceMonitor:
     async def _handle_join_muted(self, member: discord.Member, channel: discord.VoiceChannel) -> None:
         """Processa quando um usuário entra em um canal já com áudio desativado"""
         if should_monitor_channel(channel, self.monitored_channels):
-            logger.info(f"🚪 {member.name} entrou no canal {channel.name} com áudio já desativado")
+            # Verifica se é um retorno de um canal monitorado
+            is_return = member.id in self.users_left_monitored_channels
+            
+            if is_return:
+                logger.info(f"🔄 {member.name} retornou ao canal {channel.name} mutado (timeout: {self.return_muted_timeout}s)")
+                timeout_duration = self.return_muted_timeout
+                join_type = "return_muted"
+                
+                # Remove do rastreamento de saída
+                del self.users_left_monitored_channels[member.id]
+            else:
+                logger.info(f"🚪 {member.name} entrou no canal {channel.name} com áudio já desativado")
+                timeout_duration = self.join_muted_timeout
+                join_type = "join_muted"
             
             task = asyncio.create_task(
-                self._check_mute_timeout(member, self.join_muted_timeout, "join_muted")
+                self._check_mute_timeout(member, timeout_duration, join_type)
             )
             self.user_manager.add_muted_user(member.id, task)
         else:
             logger.debug(f"⏭️ Canal {channel.name} não está sendo monitorado")
     
-    async def _handle_leave_channel(self, member: discord.Member) -> None:
+    async def _handle_leave_channel(self, member: discord.Member, channel: discord.VoiceChannel) -> None:
         """Processa quando um usuário sai do canal de voz"""
         self.user_manager.remove_muted_user(member.id)
+        
+        # Se saiu de um canal monitorado, rastreia para timeout de retorno
+        if should_monitor_channel(channel, self.monitored_channels):
+            self.users_left_monitored_channels[member.id] = {
+                'channel_name': channel.name,
+                'timestamp': asyncio.get_event_loop().time()
+            }
+            logger.debug(f"📝 {member.name} saiu do canal monitorado {channel.name}, será rastreado para retorno")
     
     async def _check_mute_timeout(self, member: discord.Member, timeout_duration: Optional[int] = None, join_type: str = "normal") -> None:
         """
@@ -119,7 +144,9 @@ class VoiceMonitor:
                 
                 await self.channel_manager.move_user_to_afk(member, original_channel)
                 
-                if join_type == "join_muted":
+                if join_type == "return_muted":
+                    logger.info(f"🔄 {member.name} foi movido por retornar mutado e ficar {timeout_duration} segundos")
+                elif join_type == "join_muted":
                     logger.info(f"🚪 {member.name} foi movido por entrar mutado e ficar {timeout_duration} segundos")
                 else:
                     logger.info(f"🔄 {member.name} foi movido por ficar com áudio desativado por {timeout_duration} segundos")
@@ -143,6 +170,7 @@ class VoiceMonitor:
             "monitored_users": self.user_manager.get_user_count(),
             "mute_timeout": self.mute_timeout,
             "join_muted_timeout": self.join_muted_timeout,
+            "return_muted_timeout": self.return_muted_timeout,
             "monitored_channels": self.monitored_channels if self.monitored_channels else "Todos"
         }
     

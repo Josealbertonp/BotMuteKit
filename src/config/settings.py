@@ -14,6 +14,7 @@ class BotSettings:
     
     MUTE_TIMEOUT = int(os.getenv("MUTE_TIMEOUT", "20"))
     JOIN_MUTED_TIMEOUT = int(os.getenv("JOIN_MUTED_TIMEOUT", "5"))
+    RETURN_MUTED_TIMEOUT = int(os.getenv("RETURN_MUTED_TIMEOUT", "20"))  # Timeout para retornar mutado
     
     AFK_CHANNEL_NAME = os.getenv("AFK_CHANNEL_NAME", "ausente")
     
